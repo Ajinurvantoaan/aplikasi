@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>MS Glow Menu with Products, Sponsors and Sliders</title>
+<style>
+  /* Reset and base */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  html, body {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+    background: linear-gradient(-45deg, #1e3c72, #2a5298, #1e3c72, #2a5298);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    color: #fff;
+  }
+  @keyframes gradientBG {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+  }
+
+  /* Containers for loading and main content */
+  #loadingScreen {
+    position: fixed;
+    inset: 0;
+    background: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    text-align: center;
+    z-index: 100;
+    transition: opacity 1s ease;
+  }
+  #loadingScreen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #menuContainer {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+    overflow-x: hidden;
+  overflow-y: auto;
+  }
+  #menuContainer.visible {
+    display: flex;
+  }
+
+  /* Header/menu styling */
+  header {
+    height: 60px;
+    background: rgba(255 255 255 / 0.1);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    padding: 0;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+    user-select: none;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    justify-content: center;
+  }
+.section-title {
+ display: flex;
+ justify-content: center;
+ text-align: center;
+ align-items: center;
+}
+
+  .logo-text {
+    font-weight: 700;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    color: #fff;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  nav {
+    margin-left: auto;
+  }
+
+  ul.menu {
+    display: flex;
+    list-style: none;
+    gap: 28px;
+    flex-wrap: nowrap;
+  }
+
+  ul.menu li {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    position: relative;
+    color: #fff;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    user-select: none;
+  }
+  ul.menu li:hover,
+  ul.menu li:focus {
+    color: #fad961;
+    outline: none;
+  }
+  ul.menu li::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #fad961;
+    border-radius: 2px;
+    opacity: 0;
+    transform: scaleX(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  ul.menu li:hover::after,
+  ul.menu li:focus::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  /* Dropdown styling */
+  .dropdown {
+    position: relative;
+  }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    top: 40px;
+    left: 0;
+    background: rgba(255 255 255 / 0.1);
+    backdrop-filter: blur(8px);
+    padding: 8px 0;
+    min-width: 180px;
+    border-radius: 6px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    user-select: none;
+    z-index: 20;
+  }
+  .dropdown-content li {
+    list-style: none;
+    padding: 10px 20px;
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.3s ease;
+  }
+  .dropdown-content li:hover,
+  .dropdown-content li:focus {
+    background: #fad961;
+    color: #000;
+    outline: none;
+  }
+  /* Show dropdown on hover or focus-within */
+  .dropdown:hover .dropdown-content,
+  .dropdown:focus-within .dropdown-content {
+    display: block;
+  }
+
+  /* Main content area for menuContainer */
+  main#contentArea {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 30px;
+    overflow-y: auto;
+    user-select: none;
+  }
+
+  .section-title {
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #fad961;
+    margin-bottom: 12px;
+    user-select: none;
+  }
+
+  /* Glow effect behind logo during loading */
+  .glow-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 220px;
+    height: 220px;
+    max-width: 80vw;
+    max-height: 80vw;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%);
+    filter: blur(30px);
+    animation: pulseGlow 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  @keyframes pulseGlow {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.45;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.1);
+      opacity: 0.85;
+    }
+  }
+
+  /* Loading logo */
+  .logo {
+    width: 150px;
+    max-width: 80vw;
+    height: 150px;
+    margin: 0 auto 30px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.9));
+    stroke-dasharray: 240;
+    stroke-dashoffset: 240;
+    animation: drawStroke 2.2s forwards;
+  }
+  .logo circle {
+    stroke-dasharray: 188.5;
+    stroke-dashoffset: 188.5;
+    animation: drawCircle 2s forwards;
+  }
+  .logo path {
+    stroke-dasharray: 52;
+    stroke-dashoffset: 52;
+    animation: drawLine 1.2s forwards;
+    animation-delay: 2s;
+  }
+  .logo path:nth-of-type(2) {
+    animation-delay: 2.5s;
+  }
+  @keyframes drawCircle {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes drawLine {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Loading lines */
+  .loading-lines {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .line-bar {
+    width: 8px;
+    height: 40px;
+    background: #fff;
+    border-radius: 4px;
+    opacity: 0.7;
+    transform-origin: center bottom;
+    animation: scalePulse 1.2s infinite ease-in-out;
+  }
+  .line-bar:nth-child(1) { animation-delay: 0; }
+  .line-bar:nth-child(2) { animation-delay: 0.15s; }
+  .line-bar:nth-child(3) { animation-delay: 0.3s; }
+  .line-bar:nth-child(4) { animation-delay: 0.45s; }
+  .line-bar:nth-child(5) { animation-delay: 0.6s; }
+  @keyframes scalePulse {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.7; }
+    50% { transform: scaleY(1); opacity: 1; }
+  }
+
+  /* Product slider container */
+  .product-slider-container,
+  .sponsor-slider-container {
+    margin-top: 20px;
+    position: relative;
+  }
+
+  /* Shared slider styles */
+  .product-slider,
+  .sponsor-slider {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 18px;
+    padding-bottom: 15px;
+  }
+  .product-slider::-webkit-scrollbar,
+  .sponsor-slider::-webkit-scrollbar {
+    height: 8px;
+  }
+  .product-slider::-webkit-scrollbar-thumb,
+  .sponsor-slider::-webkit-scrollbar-thumb {
+    background: #fad961;
+    border-radius: 4px;
+  }
+  .product-slider::-webkit-scrollbar-track,
+  .sponsor-slider::-webkit-scrollbar-track {
+    background: rgba(255 255 255 / 0.1);
+  }
+
+  /* Product card */
+  .product-card {
+    flex: 0 0 220px;
+    background: rgba(255 255 255 / 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    scroll-snap-align: center;
+    padding: 16px;
+    color: #fff;
+    user-select: none;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .product-card:hover,
+  .product-card:focus {
+    background: #fad961;
+    color: #000;
+    transform: scale(1.05);
+    outline: none;
+    box-shadow: 0 6px 16px rgba(250, 217, 97, 0.8);
+  }
+  .product-image {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background-color: #fff;
+  }
+  .product-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  /* Sponsor card - smaller */
+  .sponsor-card {
+    flex: 0 0 140px;
+    background: rgba(255 255 255 / 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    scroll-snap-align: center;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: default;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    transition: transform 0.3s ease;
+  }
+  .sponsor-card:hover,
+  .sponsor-card:focus {
+    transform: scale(1.05);
+    outline: none;
+    box-shadow: 0 6px 16px rgba(250, 217, 97, 0.8);
+  }
+  .sponsor-image {
+    max-width: 100px;
+    max-height: 80px;
+    object-fit: contain;
+    filter: brightness(1) saturate(1);
+    user-select: none;
+  }
+  .product-link {
+    margin-top: 8px;
+    text-decoration: none;
+    color: #da3712;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: transparent;
+    border: 2px solid #da3712;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .product-link:hover {
+    background: #da3712;
+    color: #fff;
+  }
+
+  .slider {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  aspect-ratio: 16 / 9;
+  margin: auto;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.slides {
+  display: flex;
+  height: 100%;
+  transition: transform 0.5s ease-in-out;
+}
+
+.slide {
+  width: 100%;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+  /* Slider arrows */
+  .slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(250, 217, 97, 0.85);
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 1.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transition: background 0.3s ease;
+    z-index: 20;
+  }
+  .slider-arrow:hover {
+    background: #fad961;
+  }
+  .slider-arrow:focus {
+    outline: 2px solid #000;
+  }
+  .slider-arrow-left {
+    left: 0;
+  }
+  .slider-arrow-right {
+    right: 0;
+  }
+
+   
+
+  /* Responsive adjustments */
+  @media (max-width: 900px) {
+    header {
+      padding: 0 20px;
+    }
+    ul.menu {
+      gap: 22px;
+    }
+    .loading-lines {
+      gap: 8px;
+    }
+    .line-bar {
+      width: 7px;
+      height: 35px;
+    }
+    .logo {
+      width: 130px;
+      height: 130px;
+      margin-bottom: 25px;
+    }
+    .product-card {
+      flex: 0 0 180px;
+    }
+    .product-image {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 8px;
+    }
+    .sponsor-card {
+      flex: 0 0 120px;
+    }
+    .sponsor-image {
+      max-width: 80px;
+      max-height: 50px;
+    }
+  }
+  @media (max-width: 600px) {
+    header {
+      padding: 0 15px;
+      height: 55px;
+    }
+    ul.menu {
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    ul.menu li {
+      font-size: 0.95rem;
+    }
+    .logo-text {
+      font-size: 1.3rem;
+      letter-spacing: 1.5px;
+    }
+    .loading-lines {
+      gap: 6px;
+    }
+    .line-bar {
+      width: 6px;
+      height: 28px;
+    }
+    .logo {
+      width: 110px;
+      height: 110px;
+      margin-bottom: 20px;
+    }
+    .product-card {
+      flex: 0 0 150px;
+    }
+    .product-image {
+      width: 90px;
+      height: 90px;
+      margin-bottom: 6px;
+    }
+    .sponsor-card {
+      flex: 0 0 100px;
+    }
+    .sponsor-image {
+      max-width: 70px;
+      max-height: 40px;
+    }
+  }
+  @media (max-width: 400px) {
+    ul.menu {
+      gap: 12px;
+    }
+    ul.menu li {
+      font-size: 0.9rem;
+      padding: 2px 4px;
+    }
+    header {
+      padding: 0 10px;
+      height: 50px;
+    }
+  }
+</style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loadingScreen" role="alert" aria-live="assertive" aria-label="Loading screen with logo animation">
+    <div class="glow-effect" aria-hidden="true"></div>
+    <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
+      <circle cx="50" cy="50" r="30" />
+      <path d="M30 55 L50 35 L70 55" />
+      <path d="M30 65 L50 45 L70 65" />
+    </svg>
+    <div class="loading-lines" aria-hidden="true">
+      <div class="line-bar"></div>
+      <div class="line-bar"></div>
+      <div class="line-bar"></div>
+      <div class="line-bar"></div>
+      <div class="line-bar"></div>
+    </div>
+  </div>
+       <header>
+        <div class="logo-text" aria-label="MS Glow Logo">MS Glow</div>
+       </header>
+  </div>
+
+  <div class="slider">
+  <div class="slides" id="slides">
+    <div class="slide"><img src="img/slide.jpg" alt="Product1"></div>
+    <div class="slide"><img src="img/slide1.jpg" alt="Product2"></div>
+    <div class="slide"><img src="img/slide2.jpg" alt="Product3"></div>
+  </div>
+</div>
+      <!-- Product slider -->
+      <section aria-label="Products">
+        <h2 class="section-title">Our Products</h2>
+        <div class="product-slider-container" aria-label="Product slider" aria-live="polite" aria-atomic="true">
+          <button class="slider-arrow slider-arrow-left" aria-label="Scroll products left">&larr;</button>
+          <div class="product-slider" tabindex="0">
+            <!-- Product cards -->
+            <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/glow1.png" alt="Cream" class="product-image" />
+              <div class="product-name">Cream</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+            <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/gl2.png" alt="Serum" class="product-image" />
+              <div class="product-name">Serum</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+            <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/gl3.png" alt="Toner" class="product-image" />
+              <div class="product-name">Toner</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+            <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/gl1.png" alt="Cleanser" class="product-image" />
+              <div class="product-name">Cleanser</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+            <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/gl4.png" alt="Mask" class="product-image" />
+              <div class="product-name">Mask</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+            <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/gl5.png" alt="Mask" class="product-image" />
+              <div class="product-name">Mask</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+            <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/gl6.png" alt="Mask" class="product-image" />
+              <div class="product-name">Mask</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+             <div class="product-card" tabindex="0" role="button" aria-pressed="false">
+              <img src="img/gl7.png" alt="Mask" class="product-image" />
+              <div class="product-name">Mask</div>
+              <a href="#" class="product-link" aria-label="view product details">Cek Harga</a>
+            </div>
+          </div>
+          <button class="slider-arrow slider-arrow-right" aria-label="Scroll products right">&rarr;</button>
+        </div>
+      </section>
+
+      <!-- Sponsor slider section -->
+      <section aria-label="Sponsors" style="margin-top: 40px;">
+        <h2 class="section-title">Our Sponsors</h2>
+        <div class="sponsor-slider-container" aria-label="Sponsor slider" aria-live="polite" aria-atomic="true">
+          <button class="slider-arrow slider-arrow-left" aria-label="Scroll sponsors left">&larr;</button>
+          <div class="sponsor-slider" tabindex="0">
+            <!-- Sponsor cards -->
+            <div class="sponsor-card" tabindex="0" role="img" aria-label="Sponsor Logo 1">
+              <img src="img/sp.png" alt="Sponsor Logo 1" class="sponsor-image" />
+            </div>
+            <div class="sponsor-card" tabindex="0" role="img" aria-label="Sponsor Logo 2">
+              <img src="img/sp1.png" alt="Sponsor Logo 2" class="sponsor-image" />
+            </div>
+            <div class="sponsor-card" tabindex="0" role="img" aria-label="Sponsor Logo 3">
+              <img src="img/sp2.png" alt="Sponsor Logo 3" class="sponsor-image" />
+            </div>
+            <div class="sponsor-card" tabindex="0" role="img" aria-label="Sponsor Logo 4">
+              <img src="img/sp3.png" alt="Sponsor Logo 4" class="sponsor-image" />
+            </div>
+            <div class="sponsor-card" tabindex="0" role="img" aria-label="Sponsor Logo 5">
+              <img src="img/sp4.jpeg" alt="Sponsor Logo 5" class="sponsor-image" />
+            </div>
+          </div>
+          <button class="slider-arrow slider-arrow-right" aria-label="Scroll sponsors right">&rarr;</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    // Load transition
+    const loadingScreen = document.getElementById('loadingScreen');
+    const menuContainer = document.getElementById('menuContainer');
+
+    setTimeout(() => {
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        menuContainer.classList.add('visible');
+        menuContainer.removeAttribute('aria-hidden');
+
+        const firstMenuItem = menuContainer.querySelector('ul.menu li');
+        if (firstMenuItem) firstMenuItem.focus();
+
+        document.body.style.overflow = 'auto';
+      }, 1000);
+    }, 4000);
+
+    // Dropdown accessibility: toggle aria-expanded on focus and hover
+    const productsMenu = document.querySelector('.dropdown');
+    const dropdownContent = productsMenu.querySelector('.dropdown-content');
+    productsMenu.addEventListener('mouseenter', () => {
+      productsMenu.setAttribute('aria-expanded', 'true');
+    });
+    productsMenu.addEventListener('mouseleave', () => {
+      productsMenu.setAttribute('aria-expanded', 'false');
+    });
+    productsMenu.addEventListener('focusin', () => {
+      productsMenu.setAttribute('aria-expanded', 'true');
+    });
+    productsMenu.addEventListener('focusout', (e) => {
+      if (!productsMenu.contains(e.relatedTarget)) {
+        productsMenu.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Generic slider controls function
+    function setupSlider(sliderContainerClass) {
+      const container = document.querySelector(sliderContainerClass);
+      if (!container) return;
+      const slider = container.querySelector('div');
+      const btnLeft = container.querySelector('.slider-arrow-left');
+      const btnRight = container.querySelector('.slider-arrow-right');
+
+      // Recalculate scrollAmount if resize happens
+      let scrollAmount = 220;
+      function updateScrollAmount() {
+        if (slider.firstElementChild) {
+          const style = getComputedStyle(slider);
+          const gap = parseInt(style.gap) || 0;
+          scrollAmount = slider.firstElementChild.offsetWidth + gap;
+        }
+      }
+      updateScrollAmount();
+      window.addEventListener('resize', updateScrollAmount);
+
+      btnLeft.addEventListener('click', () => {
+        slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      });
+      btnRight.addEventListener('click', () => {
+        slider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      });
+      slider.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          slider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        }
+      });
+    }
+
+    setupSlider('.product-slider-container');
+    setupSlider('.sponsor-slider-container');
+
+    // Optional: Click product cards to alert product name (demo)
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+      card.addEventListener('click', () => {
+        alert('You selected product: ' + card.querySelector('.product-name').textContent);
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+    });
+  });
+
+  let index = 0;
+  const slides = document.getElementById("slides");
+  const totalSlides = slides.children.length;
+
+  function showSlide(i) {
+    const offset = i * -100;
+    slides.style.transform = `translateX(${offset}%)`;
+  }
+
+  function nextSlide() {
+    index = (index + 1) % totalSlides;
+    showSlide(index);
+  }
+
+  setInterval(nextSlide, 3000);
+</script>
+</body>
+</html>
+
